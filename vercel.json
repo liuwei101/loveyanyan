@@ -1,7 +1,11 @@
 {
-  "functions": {
-    "api/index.js": {
-      "runtime": "edge"
-    }
-  }
+  "version": 2,
+  "builds": [
+    { "src": "api/index.js", "use": "@vercel/edge" },
+    { "src": "index.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/", "dest": "/index.html" }
+  ]
 }
