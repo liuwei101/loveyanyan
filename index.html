@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>秋招信息共享平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#165DFF' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 登录页 -->
+    <div id="loginPage" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">秋招信息共享平台</h1>
+                <p class="text-gray-500 mt-2">输入共享密码登录</p>
+            </div>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">访问密码</label>
+                    <input type="password" id="password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none" placeholder="请输入密码">
+                    <p class="text-xs text-gray-400 mt-1">默认密码：123456</p>
+                </div>
+                <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition">登录进入</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 主页面 -->
+    <div id="mainPage" class="hidden">
+        <nav class="bg-white shadow-sm sticky top-0">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="text-xl font-bold text-gray-800"><i class="fa fa-briefcase text-primary mr-2"></i>秋招招聘信息表</div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-500">共 <span id="count">0</span> 条数据</span>
+                    <button id="logoutBtn" class="text-sm text-gray-600 hover:text-primary"><i class="fa fa-sign-out mr-1"></i>退出</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-4 py-8">
+            <div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-wrap gap-4 justify-between items-center">
+                <input type="text" id="searchInput" placeholder="搜索公司/岗位" class="px-4 py-2 border rounded-lg w-full sm:w-64">
+                <button id="addBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90"><i class="fa fa-plus mr-2"></i>新增信息</button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs text-gray-500">公司</th>
+                                <th class="px-6 py-3 text-left text-xs text-gray-500">岗位</th>
+                                <th class="px-6 py-3 text-left text-xs text-gray-500">城市</th>
+                                <th class="px-6 py-3 text-left text-xs text-gray-500">截止时间</th>
+                                <th class="px-6 py-3 text-left text-xs text-gray-500">进度</th>
+                                <th class="px-6 py-3 text-left text-xs text-gray-500">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div id="emptyTip" class="py-12 text-center text-gray-500 hidden">
+                    <i class="fa fa-inbox text-4xl block mb-2"></i>暂无数据，点击新增第一条信息
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 新增/编辑弹窗 -->
+    <div id="modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-lg font-bold">新增招聘信息</h3>
+                <button id="closeModal" class="text-gray-400 text-xl">&times;</button>
+            </div>
+            <form id="dataForm" class="space-y-4">
+                <input type="hidden" id="editId">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm mb-1">公司名称 *</label>
+                        <input type="text" id="company" required class="w-full border px-3 py-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">岗位 *</label>
+                        <input type="text" id="position" required class="w-full border px-3 py-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">城市</label>
+                        <input type="text" id="city" class="w-full border px-3 py-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">截止时间</label>
+                        <input type="date" id="deadline" class="w-full border px-3 py-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">投递链接</label>
+                        <input type="url" id="link" class="w-full border px-3 py-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">进度</label>
+                        <select id="status" class="w-full border px-3 py-2 rounded-lg">
+                            <option>未投递</option>
+                            <option>已投递</option>
+                            <option>笔试中</option>
+                            <option>面试中</option>
+                            <option>已offer</option>
+                            <option>已挂</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">备注/面经</label>
+                    <textarea id="note" rows="3" class="w-full border px-3 py-2 rounded-lg"></textarea>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" id="cancelBtn" class="border px-4 py-2 rounded-lg">取消</button>
+                    <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "/api";
+        const PWD = "123456";
+        let allData = [];
+
+        // 元素
+        const loginPage = document.getElementById("loginPage");
+        const mainPage = document.getElementById("mainPage");
+        const loginForm = document.getElementById("loginForm");
+        const logoutBtn = document.getElementById("logoutBtn");
+        const addBtn = document.getElementById("addBtn");
+        const modal = document.getElementById("modal");
+        const closeModal = document.getElementById("closeModal");
+        const cancelBtn = document.getElementById("cancelBtn");
+        const dataForm = document.getElementById("dataForm");
+        const tableBody = document.getElementById("tableBody");
+        const emptyTip = document.getElementById("emptyTip");
+        const countEl = document.getElementById("count");
+        const searchInput = document.getElementById("searchInput");
+        const modalTitle = document.getElementById("modalTitle");
+        const editId = document.getElementById("editId");
+
+        // 登录校验
+        if(localStorage.getItem("isLogin") === "1"){
+            showMain();
+        }
+
+        loginForm.addEventListener("submit", e=>{
+            e.preventDefault();
+            const pwd = document.getElementById("password").value;
+            if(pwd === PWD){
+                localStorage.setItem("isLogin","1");
+                showMain();
+            }else{
+                alert("密码错误！");
+            }
+        });
+
+        logoutBtn.addEventListener("click",()=>{
+            localStorage.removeItem("isLogin");
+            location.reload();
+        });
+
+        async function showMain(){
+            loginPage.classList.add("hidden");
+            mainPage.classList.remove("hidden");
+            await fetchData();
+        }
+
+        // 拉取云端数据
+        async function fetchData(){
+            const res = await fetch(`${API_BASE}/getData`);
+            allData = await res.json();
+            renderTable(allData);
+        }
+
+        // 渲染表格
+        function renderTable(list){
+            const key = searchInput.value.trim().toLowerCase();
+            let filter = list.filter(item=>
+                item.company.toLowerCase().includes(key) || item.position.toLowerCase().includes(key)
+            );
+            countEl.innerText = filter.length;
+            if(filter.length === 0){
+                tableBody.innerHTML = "";
+                emptyTip.classList.remove("hidden");
+                return;
+            }
+            emptyTip.classList.add("hidden");
+            const statusClass = {
+                "未投递":"bg-gray-100 text-gray-800",
+                "已投递":"bg-blue-100 text-blue-800",
+                "笔试中":"bg-yellow-100 text-yellow-800",
+                "面试中":"bg-purple-100 text-purple-800",
+                "已offer":"bg-green-100 text-green-800",
+                "已挂":"bg-red-100 text-red-800"
+            };
+            tableBody.innerHTML = filter.map(item=>`
+                <tr class="border-t hover:bg-gray-50">
+                    <td class="px-6 py-4">${item.company}</td>
+                    <td class="px-6 py-4">${item.position}</td>
+                    <td class="px-6 py-4">${item.city||"-"}</td>
+                    <td class="px-6 py-4">${item.deadline||"-"}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs ${statusClass[item.status]}">${item.status}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex gap-2">
+                            ${item.link?`<a href="${item.link}" target="_blank" class="text-primary"><i class="fa fa-link"></i></a>`:""}
+                            <button onclick="openEdit(${JSON.stringify(item)})" class="text-gray-600"><i class="fa fa-pencil"></i></button>
+                            <button onclick="delItem(${item.id})" class="text-red-500"><i class="fa fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        // 弹窗控制
+        function openAdd(){
+            modalTitle.innerText = "新增信息";
+            dataForm.reset();
+            editId.value = "";
+            modal.classList.remove("hidden");
+        }
+        function openEdit(item){
+            modalTitle.innerText = "编辑信息";
+            editId.value = item.id;
+            document.getElementById("company").value = item.company;
+            document.getElementById("position").value = item.position;
+            document.getElementById("city").value = item.city||"";
+            document.getElementById("deadline").value = item.deadline||"";
+            document.getElementById("link").value = item.link||"";
+            document.getElementById("status").value = item.status;
+            document.getElementById("note").value = item.note||"";
+            modal.classList.remove("hidden");
+        }
+        function closeModalFunc(){
+            modal.classList.add("hidden");
+        }
+        window.openEdit = openEdit;
+
+        // 新增/编辑提交
+        dataForm.addEventListener("submit",async e=>{
+            e.preventDefault();
+            const id = editId.value;
+            const postData = {
+                id: id?Number(id):Date.now(),
+                company: document.getElementById("company").value,
+                position: document.getElementById("position").value,
+                city: document.getElementById("city").value,
+                deadline: document.getElementById("deadline").value,
+                link: document.getElementById("link").value,
+                status: document.getElementById("status").value,
+                note: document.getElementById("note").value
+            };
+            await fetch(`${API_BASE}/saveData`,{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({id, data:postData})
+            });
+            closeModalFunc();
+            await fetchData();
+        });
+
+        // 删除
+        window.delItem = async function(id){
+            if(!confirm("确定删除？")) return;
+            await fetch(`${API_BASE}/delData`,{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({id})
+            });
+            await fetchData();
+        }
+
+        // 事件绑定
+        addBtn.addEventListener("click", openAdd);
+        closeModal.addEventListener("click", closeModalFunc);
+        cancelBtn.addEventListener("click", closeModalFunc);
+        modal.addEventListener("click",e=>e.target===modal&&closeModalFunc());
+        searchInput.addEventListener("input",()=>renderTable(allData));
+    </script>
+</body>
+</html>
